@@ -67,7 +67,7 @@
         self.fileQueue = [[NSOperationQueue alloc] init];
 
         self.webServer = [[GCDWebServer alloc] init];
-        [self.webServer addGETHandlerForBasePath:@"/" directoryPath:@"/" indexFilename:nil cacheAge:3600 allowRangeRequests:YES];
+        [self.webServer addGETHandlerForBasePath:@"/" directoryPath:@"/" indexFilename:nil cacheAge:0 allowRangeRequests:YES];
         [self.webServer startWithPort:8080 bonjourName:nil];
     }
 

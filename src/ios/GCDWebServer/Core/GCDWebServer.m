@@ -183,6 +183,9 @@ static void _ExecuteMainThreadRunLoopSources() {
   NSString* _dnsAddress;
   NSUInteger _dnsPort;
   BOOL _bindToLocalhost;
+    NSString *_applicationWWWPath;
+    NSString *_overrideWWWPath;
+    
 #if TARGET_OS_IPHONE
   BOOL _suspendInBackground;
   UIBackgroundTaskIdentifier _backgroundTask;
@@ -208,6 +211,11 @@ static void _ExecuteMainThreadRunLoopSources() {
     _syncQueue = dispatch_queue_create([NSStringFromClass([self class]) UTF8String], DISPATCH_QUEUE_SERIAL);
     _sourceGroup = dispatch_group_create();
     _handlers = [[NSMutableArray alloc] init];
+      
+      _applicationWWWPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
+      _overrideWWWPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+      _overrideWWWPath = [_overrideWWWPath stringByAppendingPathComponent:@"NoCloud"];
+      
 #if TARGET_OS_IPHONE
     _backgroundTask = UIBackgroundTaskInvalid;
 #endif
@@ -1060,6 +1068,8 @@ static inline NSString* _EncodeBase64(NSString* string) {
 - (void)addGETHandlerForBasePath:(NSString*)basePath directoryPath:(NSString*)directoryPath indexFilename:(NSString*)indexFilename cacheAge:(NSUInteger)cacheAge allowRangeRequests:(BOOL)allowRangeRequests {
   if ([basePath hasPrefix:@"/"] && [basePath hasSuffix:@"/"]) {
     GCDWebServer* __unsafe_unretained server = self;
+      NSString* applicationWWWPath = _applicationWWWPath;
+      NSString* overrideWWWPath = _overrideWWWPath;
     [self addHandlerWithMatchBlock:^GCDWebServerRequest*(NSString* requestMethod, NSURL* requestURL, NSDictionary* requestHeaders, NSString* urlPath, NSDictionary* urlQuery) {
 
       if (![requestMethod isEqualToString:@"GET"]) {
@@ -1068,6 +1078,7 @@ static inline NSString* _EncodeBase64(NSString* string) {
       if (![urlPath hasPrefix:basePath]) {
         return nil;
       }
+        
       return [[GCDWebServerRequest alloc] initWithMethod:requestMethod url:requestURL headers:requestHeaders path:urlPath query:urlQuery];
 
     }
@@ -1075,6 +1086,15 @@ static inline NSString* _EncodeBase64(NSString* string) {
 
           GCDWebServerResponse* response = nil;
           NSString* filePath = [directoryPath stringByAppendingPathComponent:[request.path substringFromIndex:basePath.length]];
+            
+            if ([filePath hasPrefix:applicationWWWPath]) {
+                NSString* wwwFilePath = [filePath substringFromIndex:applicationWWWPath.length + 1];
+                
+                NSString* overrideFilePath = [overrideWWWPath stringByAppendingPathComponent:wwwFilePath];
+                if ([[NSFileManager defaultManager] fileExistsAtPath:overrideFilePath]) {
+                    filePath = overrideFilePath;
+                }
+            }
           NSString* fileType = [[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:NULL] fileType];
           if (fileType) {
             if ([fileType isEqualToString:NSFileTypeDirectory]) {
