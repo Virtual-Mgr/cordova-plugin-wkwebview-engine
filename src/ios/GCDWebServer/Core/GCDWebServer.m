@@ -1086,15 +1086,18 @@ static inline NSString* _EncodeBase64(NSString* string) {
 
           GCDWebServerResponse* response = nil;
           NSString* filePath = [directoryPath stringByAppendingPathComponent:[request.path substringFromIndex:basePath.length]];
-            
-            if ([filePath hasPrefix:applicationWWWPath]) {
-                NSString* wwwFilePath = [filePath substringFromIndex:applicationWWWPath.length + 1];
-                
-                NSString* overrideFilePath = [overrideWWWPath stringByAppendingPathComponent:wwwFilePath];
-                if ([[NSFileManager defaultManager] fileExistsAtPath:overrideFilePath]) {
-                    filePath = overrideFilePath;
-                }
+
+            if (![filePath hasPrefix:applicationWWWPath]) {
+                filePath = [applicationWWWPath stringByAppendingString:filePath];
             }
+            
+            NSString* wwwFilePath = [filePath substringFromIndex:applicationWWWPath.length + 1];
+            
+            NSString* overrideFilePath = [overrideWWWPath stringByAppendingPathComponent:wwwFilePath];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:overrideFilePath]) {
+                filePath = overrideFilePath;
+            }
+
           NSString* fileType = [[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:NULL] fileType];
           if (fileType) {
             if ([fileType isEqualToString:NSFileTypeDirectory]) {
