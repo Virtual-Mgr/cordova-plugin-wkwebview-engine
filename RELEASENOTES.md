@@ -21,6 +21,19 @@
 
 # Release Notes
 
+### 1.1.3 (Apr 27, 2017)
+* [CB-12696](https://issues.apache.org/jira/browse/CB-12696) (iOS) Fixing some Xcode warnings
+* [CB-12685](https://issues.apache.org/jira/browse/CB-12685) added `package.json` to tests folder
+* [CB-12575](https://issues.apache.org/jira/browse/CB-12575) cordova-plugin-wkwebview-engine missing LICENSE file
+* [CB-12519](https://issues.apache.org/jira/browse/CB-12519) added missing license header
+
+### 1.1.2 (Feb 28, 2017)
+* [CB-12497](https://issues.apache.org/jira/browse/CB-12497) `location.href` links are silently disallowed
+* [CB-12490](https://issues.apache.org/jira/browse/CB-12490) - Updated experimental plugin link
+* Allow to configure navigation by gestures
+* [CB-12297](https://issues.apache.org/jira/browse/CB-12297) Support `WKProcessPool` for cookie sharing
+* [CB-12414](https://issues.apache.org/jira/browse/CB-12414) **iOS:** Forward error from provisional load error to standard load error
+
 ### 1.1.1 (Dec 07, 2016)
 * [CB-12224](https://issues.apache.org/jira/browse/CB-12224) Updated version and RELEASENOTES.md for release 1.1.1
 * [CB-10228](https://issues.apache.org/jira/browse/CB-10228) - AppendUserAgent not working with WKWebView
