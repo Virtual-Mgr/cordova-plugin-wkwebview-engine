@@ -30,6 +30,60 @@
 #define CDV_IONIC_STOP_SCROLL @"stopScroll"
 
 
+@implementation UIScrollView (BugIOS11)
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
+
++ (void)load {
+    if (@available(iOS 11.0, *)) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            Class class = [self class];
+            SEL originalSelector = @selector(init);
+            SEL swizzledSelector = @selector(xxx_init);
+
+            Method originalMethod = class_getInstanceMethod(class, originalSelector);
+            Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
+
+            BOOL didAddMethod =
+            class_addMethod(class,
+                            originalSelector,
+                            method_getImplementation(swizzledMethod),
+                            method_getTypeEncoding(swizzledMethod));
+
+            if (didAddMethod) {
+                class_replaceMethod(class,
+                                    swizzledSelector,
+                                    method_getImplementation(originalMethod),
+                                    method_getTypeEncoding(originalMethod));
+            } else {
+                method_exchangeImplementations(originalMethod, swizzledMethod);
+            }
+        });
+    }
+}
+
+#endif
+
+#pragma mark - Method Swizzling
+
+- (id)xxx_init {
+    id a = [self xxx_init];
+    if (@available(iOS 11.0, *)) {
+        NSArray *stack = [NSThread callStackSymbols];
+        for(NSString *trace in stack) {
+            if([trace containsString:@"WebKit"]) {
+                [a setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
+                break;
+            }
+        }
+    }
+    return a;
+}
+
+@end
+
+
 @interface CDVWKWeakScriptMessageHandler : NSObject <WKScriptMessageHandler>
 
 @property (nonatomic, weak, readonly) id<WKScriptMessageHandler>scriptMessageHandler;
@@ -132,6 +186,13 @@
 
     // re-create WKWebView, since we need to update configuration
     WKWebView* wkWebView = [[WKWebView alloc] initWithFrame:self.frame configuration:configuration];
+
+    #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
+    if (@available(iOS 11.0, *)) {
+      [wkWebView.scrollView setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
+    }
+    #endif
+
     wkWebView.UIDelegate = self.uiDelegate;
     self.engineWebView = wkWebView;
 
@@ -153,6 +214,10 @@
         [wkWebView.configuration.userContentController addScriptMessageHandler:(id < WKScriptMessageHandler >)self.viewController name:CDV_BRIDGE_NAME];
     }
 
+    if (![settings cordovaBoolSettingForKey:@"KeyboardDisplayRequiresUserAction" defaultValue:YES]) {
+        [self keyboardDisplayDoesNotRequireUserAction];
+    }
+
     [self updateSettings:settings];
 
     // check if content thread has died on resume
@@ -165,6 +230,18 @@
     NSLog(@"Using Ionic WKWebView");
 
     [self addURLObserver];
+}
+
+// https://github.com/Telerik-Verified-Plugins/WKWebView/commit/04e8296adeb61f289f9c698045c19b62d080c7e3#L609-L620
+- (void) keyboardDisplayDoesNotRequireUserAction {
+		SEL sel = sel_getUid("_startAssistingNode:userIsInteracting:blurPreviousNode:userObject:");
+  	Class WKContentView = NSClassFromString(@"WKContentView");
+  	Method method = class_getInstanceMethod(WKContentView, sel);
+  	IMP originalImp = method_getImplementation(method);
+  	IMP imp = imp_implementationWithBlock(^void(id me, void* arg0, BOOL arg1, BOOL arg2, id arg3) {
+    		((void (*)(id, SEL, void*, BOOL, BOOL, id))originalImp)(me, sel, arg0, TRUE, arg2, arg3);
+  	});
+  	method_setImplementation(method, imp);
 }
 
 - (void)onReset {
