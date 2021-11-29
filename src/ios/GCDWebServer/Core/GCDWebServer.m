@@ -185,6 +185,7 @@ static void _ExecuteMainThreadRunLoopSources() {
   BOOL _bindToLocalhost;
     NSString *_applicationWWWPath;
     NSString *_overrideWWWPath;
+    NSArray* _noneSpaExtensions;
     
 #if TARGET_OS_IPHONE
   BOOL _suspendInBackground;
@@ -215,6 +216,7 @@ static void _ExecuteMainThreadRunLoopSources() {
       _applicationWWWPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
       _overrideWWWPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
       _overrideWWWPath = [_overrideWWWPath stringByAppendingPathComponent:@"NoCloud"];
+      _noneSpaExtensions = [NSArray arrayWithObjects:@"map",@"js",@"woff2",@"json",@"png",@"jpg",@"jpeg",@"css", nil];
       
 #if TARGET_OS_IPHONE
     _backgroundTask = UIBackgroundTaskInvalid;
@@ -1052,6 +1054,8 @@ static inline NSString* _EncodeBase64(NSString* string) {
     GCDWebServer* __unsafe_unretained server = self;
       NSString* applicationWWWPath = _applicationWWWPath;
       NSString* overrideWWWPath = _overrideWWWPath;
+      NSArray* noneSpaExtensions = _noneSpaExtensions;
+      
     [self addHandlerWithMatchBlock:^GCDWebServerRequest*(NSString* requestMethod, NSURL* requestURL, NSDictionary* requestHeaders, NSString* urlPath, NSDictionary* urlQuery) {
 
       if (![requestMethod isEqualToString:@"GET"]) {
@@ -1103,7 +1107,15 @@ static inline NSString* _EncodeBase64(NSString* string) {
           if (response) {
             response.cacheControlMaxAge = cacheAge;
           } else {
-            response = [GCDWebServerResponse responseWithStatusCode:kGCDWebServerHTTPStatusCode_NotFound];
+            NSString* extension = [filePath pathExtension];
+            if (extension != NULL && [noneSpaExtensions containsObject:extension]) {
+                response = [GCDWebServerResponse responseWithStatusCode:kGCDWebServerHTTPStatusCode_NotFound];
+            } else {
+                // Ok, we could not find the file, so instead we serve up index.html since we know this is a Single Page Application with virtual Urls
+                GCDWebServerResponse* redirect = [GCDWebServerResponse responseWithStatusCode:kGCDWebServerHTTPStatusCode_TemporaryRedirect];
+                [redirect setValue:@"/index.html" forAdditionalHeader:@"location"];
+                response = redirect;
+            }
           }
           [response setValue:@"*" forAdditionalHeader:@"Access-Control-Allow-Origin"];
           return response;
