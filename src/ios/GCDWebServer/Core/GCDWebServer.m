@@ -216,7 +216,7 @@ static void _ExecuteMainThreadRunLoopSources() {
       _applicationWWWPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
       _overrideWWWPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
       _overrideWWWPath = [_overrideWWWPath stringByAppendingPathComponent:@"NoCloud"];
-      _noneSpaExtensions = [NSArray arrayWithObjects:@"map",@"js",@"woff2",@"json",@"png",@"jpg",@"jpeg",@"css", nil];
+      _noneSpaExtensions = [NSArray arrayWithObjects:@"map",@"js",@"woff2",@"json",@"png",@"jpg",@"jpeg",@"css",@"ico", nil];
       
 #if TARGET_OS_IPHONE
     _backgroundTask = UIBackgroundTaskInvalid;
