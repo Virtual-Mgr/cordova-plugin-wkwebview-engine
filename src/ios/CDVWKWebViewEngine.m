@@ -167,6 +167,15 @@
     [self addURLObserver];
 }
 
+- (void) setSpaConfig:(CDVInvokedUrlCommand*)command {
+    NSDictionary* spaConfig = [command argumentAtIndex:0];
+
+    [self.webServer setSpaConfig:spaConfig];
+    
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
 - (void)onReset {
     [self addURLObserver];
 }

@@ -374,6 +374,8 @@ extern NSString* const GCDWebServerAuthenticationMethod_DigestAccess;
  */
 - (void)stop;
 
+- (void)setSpaConfig:(NSDictionary*)config;
+
 @end
 
 @interface GCDWebServer (Extensions)

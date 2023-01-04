@@ -185,6 +185,7 @@ static void _ExecuteMainThreadRunLoopSources() {
   BOOL _bindToLocalhost;
     NSString *_applicationWWWPath;
     NSString *_overrideWWWPath;
+    NSDictionary* _spaConfig;
     
 #if TARGET_OS_IPHONE
   BOOL _suspendInBackground;
@@ -215,7 +216,7 @@ static void _ExecuteMainThreadRunLoopSources() {
       _applicationWWWPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
       _overrideWWWPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
       _overrideWWWPath = [_overrideWWWPath stringByAppendingPathComponent:@"NoCloud"];
-      
+      _spaConfig = NULL;
 #if TARGET_OS_IPHONE
     _backgroundTask = UIBackgroundTaskInvalid;
 #endif
@@ -746,6 +747,10 @@ static inline NSString* _EncodeBase64(NSString* string) {
   }
 }
 
+- (void)setSpaConfig:(NSDictionary*)config {
+    _spaConfig = config;
+}
+
 #if TARGET_OS_IPHONE
 
 - (void)_didEnterBackground:(NSNotification*)notification {
@@ -1075,10 +1080,12 @@ static inline NSString* _EncodeBase64(NSString* string) {
             
             NSString* wwwFilePath = [filePath substringFromIndex:applicationWWWPath.length + 1];
             
-            // VMPlayer uses AngularJs virtual path under /a which will 404 and crash the app
-            // so we serve index.html for these paths
-            if ([wwwFilePath hasPrefix:@"vmplayer/a/"] || [wwwFilePath isEqualToString:@"vmplayer/a"]) {
-                wwwFilePath = @"vmplayer/index.html";
+            if (server->_spaConfig != NULL) {
+              for (NSString* prefix in server->_spaConfig) {
+                  if ([wwwFilePath hasPrefix:prefix] || [wwwFilePath isEqualToString:prefix]) {
+                      wwwFilePath = [server->_spaConfig objectForKey:prefix];
+                  }
+              }
             }
             
             NSString* overrideFilePath = [overrideWWWPath stringByAppendingPathComponent:wwwFilePath];

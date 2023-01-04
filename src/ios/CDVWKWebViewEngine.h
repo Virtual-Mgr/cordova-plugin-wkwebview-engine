@@ -22,6 +22,7 @@
 
 @interface CDVWKWebViewEngine : CDVPlugin <CDVWebViewEngineProtocol, WKScriptMessageHandler, WKNavigationDelegate>
 
-@property (nonatomic, strong, readonly) id <WKUIDelegate> uiDelegate;
+@property(nonatomic, strong, readonly) id<WKUIDelegate> uiDelegate;
+- (void)setSpaConfig:(CDVInvokedUrlCommand *)command;
 
 @end
