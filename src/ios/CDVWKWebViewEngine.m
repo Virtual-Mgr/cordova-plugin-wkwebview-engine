@@ -135,6 +135,10 @@
     wkWebView.UIDelegate = self.uiDelegate;
     self.engineWebView = wkWebView;
 
+    if (@available(macOS 13.3, iOS 16.4, tvOS 16.4, *)) {
+        wkWebView.inspectable = YES;
+    }
+    
     if (IsAtLeastiOSVersion(@"9.0") && [self.viewController isKindOfClass:[CDVViewController class]]) {
         wkWebView.customUserAgent = ((CDVViewController*) self.viewController).userAgent;
     }
